@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>First Element · IHM</title>
+<style>
+  :root{
+    --bg:#070b1c; --surface:#111a38; --surface2:#172247; --surface3:#1d2a57;
+    --border:rgba(255,255,255,0.08); --border-hi:rgba(255,255,255,0.18);
+    --gold:#f6c66b; --gold-dim:rgba(246,198,107,0.14); --gold-line:rgba(246,198,107,0.45);
+    --text:#eef1fb; --muted:#9aa3cc;
+    --pv:#f6c66b; --bat:#5ea8ff; --h2:#4fd1e8; --grid:#a78bf4; --bld:#e9ecf8; --inj:#ee7a5c; --ok:#5fd3a0; --warn:#ee7a5c;
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;background:var(--bg)}
+  body{color:var(--text);font-family:'Plus Jakarta Sans','Cantarell','DejaVu Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+    background:radial-gradient(110% 60% at 100% -10%, rgba(53,80,180,.22), transparent 55%), radial-gradient(80% 50% at -10% -10%, rgba(246,198,107,.07), transparent 50%), var(--bg);
+    user-select:none;-webkit-user-select:none;touch-action:manipulation;cursor:none}
+  body.mouse{cursor:default}
+  .app{display:flex;flex-direction:column;height:100vh}
+
+  /* ---------- barre haute ---------- */
+  .top{flex:none;height:76px;display:flex;align-items:center;gap:18px;padding:0 20px;border-bottom:1px solid var(--border);background:rgba(7,11,28,.6)}
+  .brand{display:flex;align-items:center;gap:12px;min-width:220px}
+  .brand svg{height:40px;width:auto}
+  .brand .wm{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .brand strong{display:block;font-size:19px;font-weight:800;margin-top:1px}
+  nav{flex:1;display:flex;gap:8px;justify-content:center}
+  nav button{min-width:150px;height:54px;padding:0 18px;background:var(--surface);border:1px solid var(--border);color:var(--muted);
+    font:inherit;font-size:15px;font-weight:700;letter-spacing:.03em;display:flex;align-items:center;justify-content:center;gap:10px;
+    clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+  nav button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  nav button.active{background:var(--gold-dim);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold-line)}
+  .status{min-width:220px;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+  .clock{font-size:22px;font-weight:800;letter-spacing:.02em}
+  .badge{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ok)}
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:pulse 2s infinite}
+  .badge.stale{color:var(--muted)} .badge.stale .dot{background:var(--warn);animation:none}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(95,211,160,.55)}70%{box-shadow:0 0 0 8px rgba(95,211,160,0)}100%{box-shadow:0 0 0 0 rgba(95,211,160,0)}}
+
+  /* ---------- pages ---------- */
+  .pages{flex:1;position:relative;min-height:0}
+  .page{position:absolute;inset:0;padding:16px 20px 18px;display:none}
+  .page.active{display:flex;flex-direction:column;gap:14px;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .card{background:var(--surface);border:1px solid var(--border);position:relative;padding:16px 18px;min-height:0}
+  .card::before{content:'';position:absolute;top:0;left:18%;right:18%;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.45}
+  .ctitle{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+  .ctitle em{font-style:normal;color:rgba(255,255,255,.4);letter-spacing:.06em;text-transform:none;font-weight:500}
+  .seg{display:flex;background:var(--surface2);border:1px solid var(--border);padding:3px;gap:3px}
+  .seg button{background:none;border:0;color:var(--muted);font:inherit;font-size:14px;font-weight:700;padding:0 18px;height:46px;min-width:96px}
+  .seg button.active{background:var(--gold-dim);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold-line)}
+
+  /* accueil */
+  .home{flex:1;display:grid;grid-template-columns:1fr 268px;gap:14px;min-height:0}
+  .sk-card{display:flex;flex-direction:column}
+  .sk-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
+  .sk-head .ttl{font-size:20px;font-weight:800}
+  .sk-head .ttl small{display:block;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;margin-top:2px}
+  #sankey{flex:1;width:100%;min-height:0}
+  .side{display:flex;flex-direction:column;gap:10px;min-height:0}
+  .kp{background:var(--surface);border:1px solid var(--border);padding:12px 14px;position:relative;overflow:hidden;flex:1;display:flex;flex-direction:column;justify-content:center}
+  .kp::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,var(--gold))}
+  .kp .l{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .kp .v{font-size:30px;font-weight:800;color:var(--c,var(--text));margin-top:2px;line-height:1.1}
+  .kp .v small{font-size:14px;font-weight:600;color:var(--muted);margin-left:4px}
+  .kp .s{font-size:12px;color:var(--muted);margin-top:3px}
+  .bar{height:7px;background:rgba(255,255,255,.08);margin-top:7px;border-radius:4px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--c);width:0;border-radius:4px;transition:width .9s ease}
+
+  /* graphiques */
+  .g-tool{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .g-tool .pt{font-size:18px;font-weight:800}
+  .g-grid{flex:1;display:grid;grid-template-columns:1fr 300px;gap:14px;min-height:0}
+  .chart-card{display:flex;flex-direction:column}
+  #bars{flex:1;width:100%;min-height:0}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;font-size:13px;color:var(--muted)}
+  .legend span{display:flex;align-items:center;gap:7px}
+  .legend i{width:12px;height:12px;border-radius:2px;background:var(--c)}
+  .recap{display:flex;flex-direction:column}
+  .rrow{display:flex;justify-content:space-between;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--border);font-size:14px;gap:10px}
+  .rrow span{color:var(--muted);display:flex;align-items:center;gap:8px}
+  .rrow span i{width:9px;height:9px;border-radius:50%;background:var(--c)}
+  .rrow b{font-size:17px;font-weight:800}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto;padding-top:12px}
+  .kpi{background:var(--surface2);border:1px solid var(--border);padding:14px 8px;text-align:center}
+  .kpi b{display:block;font-size:28px;font-weight:800;color:var(--gold)}
+  .kpi span{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .tip{position:fixed;pointer-events:none;background:#0b1230;border:1px solid var(--border-hi);padding:12px 14px;font-size:13px;min-width:230px;z-index:20;display:none;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  .tip .tt{font-weight:800;margin-bottom:6px}
+  .tip .r{display:flex;justify-content:space-between;gap:14px;color:var(--muted);line-height:1.75}
+  .tip .r b{color:var(--text)}
+
+  /* hydrogène */
+  .chain{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative}
+  .step{background:var(--surface);border:1px solid var(--border);padding:18px;position:relative;min-height:190px;display:flex;flex-direction:column}
+  .step .ic{width:46px;height:46px;border-radius:50%;border:2px solid var(--h2);display:flex;align-items:center;justify-content:center;color:var(--h2);margin-bottom:12px}
+  .step .ic svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .step .n{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .step .t{font-size:19px;font-weight:800;margin-top:3px}
+  .step .st{margin-top:auto;font-size:15px;font-weight:800}
+  .step .st.on{color:var(--ok)} .step .st.idle{color:var(--text)} .step .st.warn{color:var(--warn)}
+  .step .d{font-size:13px;color:var(--muted);margin-top:4px}
+  .step:not(:last-child)::after{content:'';position:absolute;right:-13px;top:50%;width:12px;height:2px;background:var(--h2);opacity:.6}
+  .h2-low{flex:1;display:grid;grid-template-columns:1.15fr 1fr;gap:14px;min-height:0}
+  .tank{display:flex;gap:22px;align-items:center;height:100%}
+  .tank-vis{width:120px;height:100%;max-height:250px;border:2px solid var(--h2);border-radius:14px;position:relative;overflow:hidden;flex:none;background:rgba(79,209,232,.04)}
+  .tank-vis i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(79,209,232,.75),rgba(79,209,232,.35));transition:height 1s ease}
+  .tank-vis b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+  .tank-info .big{font-size:44px;font-weight:800;color:var(--h2);line-height:1}
+  .tank-info .big small{font-size:18px;color:var(--muted);margin-left:4px}
+  .tank-info p{color:var(--muted);font-size:14px;margin-top:8px;line-height:1.5}
+  .h2stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .h2stats .kp{flex:none;padding:14px}
+  .h2stats .kp .v{font-size:24px}
+  .note{font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:10px}
+
+  /* technique */
+  .t-top{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+  .t-top .kp{flex:none;padding:12px}
+  .t-top .kp .v{font-size:22px}
+  .t-main{flex:1;display:grid;grid-template-columns:230px 1fr;gap:14px;min-height:0}
+  .t-groups{display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+  .t-groups button{background:var(--surface);border:1px solid var(--border);color:var(--muted);font:inherit;font-size:14px;font-weight:700;text-align:left;padding:0 14px;min-height:50px;display:flex;justify-content:space-between;align-items:center}
+  .t-groups button.active{background:var(--gold-dim);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold-line)}
+  .t-groups button em{font-style:normal;font-size:12px;opacity:.7}
+  .t-list{overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-content:start;padding-right:4px}
+  .t-item{background:var(--surface2);border:1px solid var(--border);padding:10px 12px;min-width:0}
+  .t-item .k{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .t-item .x{font-size:19px;font-weight:800;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .t-item .a{font-size:10.5px;color:rgba(255,255,255,.35);margin-top:2px}
+  .t-item.old .x{color:var(--muted)}
+  .empty{color:var(--muted);font-size:14px;text-align:center;padding:40px 10px;grid-column:1/-1;line-height:1.6}
+
+  /* ---------- veille ---------- */
+  .saver{position:fixed;inset:0;z-index:50;background:#03050e;display:none;align-items:center;justify-content:center;flex-direction:column}
+  .saver.on{display:flex;animation:fade 1s ease}
+  .saver .inner{display:flex;flex-direction:column;align-items:center;transition:transform 2s ease}
+  .saver .logo{width:440px;height:auto;filter:drop-shadow(0 0 28px rgba(238,122,92,.28))}
+  .saver .site{margin-top:6px;font-size:16px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .saver .sclock{margin-top:16px;font-size:52px;font-weight:800;letter-spacing:.02em;color:rgba(238,241,251,.9)}
+  .saver .sdate{font-size:16px;color:var(--muted);margin-top:4px}
+  .saver .skpi{display:flex;gap:46px;margin-top:20px}
+  .saver .skpi div{text-align:center}
+  .saver .skpi b{display:block;font-size:30px;font-weight:800}
+  .saver .skpi span{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .saver .hint{position:absolute;bottom:26px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 100 88" aria-hidden="true"><defs><linearGradient id="tri" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6c66b"/><stop offset=".45" stop-color="#ee7a5c"/><stop offset="1" stop-color="#3550b4"/></linearGradient></defs><path d="M50 11 L89 77 L11 77 Z" fill="none" stroke="url(#tri)" stroke-width="15" stroke-linejoin="round"/></svg>
+      <div><div class="wm">First Element</div><strong id="siteName">Chalets 3</strong></div>
+    </div>
+    <nav id="nav">
+      <button data-p="home" class="active"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
+      <button data-p="charts"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Graphiques</button>
+      <button data-p="h2"><svg viewBox="0 0 24 24"><path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/></svg>Hydrogène</button>
+      <button data-p="tech"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Technique</button>
+    </nav>
+    <div class="status">
+      <div class="clock" id="clock">--:--</div>
+      <div class="badge stale" id="badge"><span class="dot"></span><span id="badgeTxt">Chargement…</span></div>
+    </div>
+  </header>
+
+  <main class="pages">
+    <!-- ACCUEIL -->
+    <section class="page active" id="p-home">
+      <div class="home">
+        <div class="card sk-card">
+          <div class="sk-head">
+            <div class="ttl">Flux d'énergie <small id="skSub">&nbsp;</small></div>
+            <div class="seg" id="skSeg">
+              <button data-m="kw" class="active">En direct · kW</button>
+              <button data-m="jour">Jour · kWh</button>
+              <button data-m="mois">Mois · kWh</button>
+              <button data-m="annee">Année · kWh</button>
+            </div>
+          </div>
+          <svg id="sankey" viewBox="0 18 1100 460" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <div class="side">
+          <div class="kp" style="--c:var(--gold)"><div class="l">Autonomie aujourd'hui</div><div class="v" id="hAuto">—</div><div class="s">Part couverte sans le réseau</div></div>
+          <div class="kp" style="--c:var(--pv)"><div class="l">Solaire</div><div class="v" id="hPv">—</div><div class="s" id="hPvS">&nbsp;</div></div>
+          <div class="kp" style="--c:var(--bat)"><div class="l">Batterie</div><div class="v" id="hBat">—</div><div class="bar"><i id="hBatB"></i></div><div class="s" id="hBatS">&nbsp;</div></div>
+          <div class="kp" style="--c:var(--h2)"><div class="l">Réserve d'hydrogène</div><div class="v" id="hH2">—</div><div class="bar"><i id="hH2B"></i></div><div class="s" id="hH2S">&nbsp;</div></div>
+          <div class="kp" id="hGridK" style="--c:var(--grid)"><div class="l">Réseau</div><div class="v" id="hGrid">—</div><div class="s" id="hGridS">&nbsp;</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GRAPHIQUES -->
+    <section class="page" id="p-charts">
+      <div class="g-tool">
+        <div class="seg" id="pSeg">
+          <button data-p="jour" class="active">Aujourd'hui</button>
+          <button data-p="24h">24 h</button>
+          <button data-p="semaine">7 jours</button>
+          <button data-p="mois">Mois</button>
+          <button data-p="annee">Année</button>
+        </div>
+        <div class="pt" id="pTitle">&nbsp;</div>
+      </div>
+      <div class="g-grid">
+        <div class="card chart-card">
+          <div class="ctitle"><span>Couverture de la consommation — kWh</span><em id="stepLbl"></em></div>
+          <svg id="bars" preserveAspectRatio="none"></svg>
+          <div class="legend">
+            <span style="--c:var(--pv)"><i></i>Solaire</span>
+            <span style="--c:var(--bat)"><i></i>Batterie</span>
+            <span style="--c:var(--h2)"><i></i>Pile H₂</span>
+            <span style="--c:rgba(167,139,244,.6)"><i></i>Réseau</span>
+            <span style="--c:var(--inj)"><i></i>Injection</span>
+          </div>
+        </div>
+        <div class="card recap">
+          <div class="ctitle"><span>Récapitulatif</span></div>
+          <div class="rrow"><span style="--c:var(--pv)"><i></i>Production solaire</span><b id="rPv">—</b></div>
+          <div class="rrow"><span style="--c:var(--bld)"><i></i>Bâtiment</span><b id="rLoad">—</b></div>
+          <div class="rrow"><span style="--c:var(--h2)"><i></i>Production H₂</span><b id="rH2">—</b></div>
+          <div class="rrow"><span style="--c:var(--grid)"><i></i>Soutiré réseau</span><b id="rImp">—</b></div>
+          <div class="rrow"><span style="--c:var(--inj)"><i></i>Injecté réseau</span><b id="rExp">—</b></div>
+          <div class="kpis">
+            <div class="kpi"><b id="kAuto">—</b><span>Autonomie</span></div>
+            <div class="kpi"><b id="kSelf">—</b><span>Autoconso.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HYDROGÈNE -->
+    <section class="page" id="p-h2">
+      <div class="chain">
+        <div class="step">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></div>
+          <div class="n">Étape 1</div><div class="t">Électrolyse</div>
+          <div class="st" id="yEly">—</div><div class="d" id="yElyD">&nbsp;</div>
+        </div>
+        <div class="step">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 12h16M12 4v16M7 7l10 10M17 7L7 17"/></svg></div>
+          <div class="n">Étape 2</div><div class="t">Compression</div>
+          <div class="st idle" id="yCmp">—</div><div class="d" id="yCmpD">&nbsp;</div>
+        </div>
+        <div class="step">
+          <div class="ic"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="4"/><path d="M7 9h10"/></svg></div>
+          <div class="n">Étape 3</div><div class="t">Stockage (racks)</div>
+          <div class="st idle" id="ySt">—</div><div class="d" id="yStD">&nbsp;</div>
+        </div>
+        <div class="step">
+          <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10v4M11 10v4M15 10v4"/></svg></div>
+          <div class="n">Étape 4</div><div class="t">Pile à combustible</div>
+          <div class="st" id="yFc">—</div><div class="d" id="yFcD">&nbsp;</div>
+        </div>
+      </div>
+      <div class="h2-low">
+        <div class="card">
+          <div class="ctitle"><span>Réserve d'hydrogène</span><em id="yTime"></em></div>
+          <div class="tank">
+            <div class="tank-vis"><i id="yTank"></i><b id="yTankV">—</b></div>
+            <div class="tank-info">
+              <div class="big" id="yPress">—</div>
+              <p>Pression mesurée dans les racks de stockage.<br>L'hydrogène est produit avec l'électricité du site,<br>stocké sous pression, puis reconverti en électricité<br>par la pile lorsque le solaire et la batterie ne suffisent plus.</p>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ctitle"><span>Énergie de la chaîne hydrogène</span></div>
+          <div class="h2stats">
+            <div class="kp" style="--c:var(--h2)"><div class="l">Aujourd'hui</div><div class="v" id="yJ">—</div><div class="s">électricité vers H₂</div></div>
+            <div class="kp" style="--c:var(--h2)"><div class="l">Ce mois</div><div class="v" id="yM">—</div><div class="s">électricité vers H₂</div></div>
+            <div class="kp" style="--c:var(--h2)"><div class="l">Cette année</div><div class="v" id="yA">—</div><div class="s">électricité vers H₂</div></div>
+            <div class="kp" style="--c:var(--ok)"><div class="l">Pile · jour</div><div class="v" id="yFJ">—</div><div class="s">restitué</div></div>
+            <div class="kp" style="--c:var(--ok)"><div class="l">Pile · mois</div><div class="v" id="yFM">—</div><div class="s">restitué</div></div>
+            <div class="kp" style="--c:var(--ok)"><div class="l">Pile · année</div><div class="v" id="yFA">—</div><div class="s">restitué</div></div>
+          </div>
+          <div class="note">« Électricité vers H₂ » : consommation de l'électrolyse et de la compression. « Restitué » : énergie produite par la pile.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TECHNIQUE -->
+    <section class="page" id="p-tech">
+      <div class="t-top">
+        <div class="kp" style="--c:var(--h2)"><div class="l">État électrolyse</div><div class="v" id="tEly">—</div><div class="s" id="tElyC">&nbsp;</div></div>
+        <div class="kp" style="--c:var(--h2)"><div class="l">Puiss. H₂</div><div class="v" id="tH2">—</div><div class="s">électrolyse + compr.</div></div>
+        <div class="kp" style="--c:var(--ok)"><div class="l">État pile</div><div class="v" id="tFc">—</div><div class="s" id="tFcC">&nbsp;</div></div>
+        <div class="kp" style="--c:var(--ok)"><div class="l">Puiss. pile</div><div class="v" id="tFcP">—</div><div class="s">&nbsp;</div></div>
+        <div class="kp" style="--c:var(--h2)"><div class="l">Racks</div><div class="v" id="tPr">—</div><div class="s" id="tSoc">&nbsp;</div></div>
+        <div class="kp" id="tAgeK" style="--c:var(--ok)"><div class="l">Dernière mesure</div><div class="v" id="tAge">—</div><div class="s" id="tAgeS">&nbsp;</div></div>
+      </div>
+      <div class="t-main">
+        <div class="t-groups" id="tGroups"></div>
+        <div class="card" style="display:flex;flex-direction:column;padding:12px 12px 12px 14px">
+          <div class="ctitle"><span id="tGTitle">Mesures brutes du Quokka</span><em id="tGInfo"></em></div>
+          <div class="t-list" id="tList"><div class="empty">Chargement des mesures techniques…</div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- VEILLE -->
+<div class="saver" id="saver">
+  <div class="inner" id="saverInner">
+    <svg class="logo" viewBox="0 0 300 300" aria-label="First Element">
+      <defs><linearGradient id="sTri" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6c66b"/><stop offset=".5" stop-color="#ee7a5c"/><stop offset="1" stop-color="#3550b4"/></linearGradient></defs>
+      <path d="M150 22 L215 134 L85 134 Z" fill="none" stroke="url(#sTri)" stroke-width="24" stroke-linejoin="round"/>
+      <text x="150" y="214" text-anchor="middle" fill="#fff" font-size="58" font-weight="800" font-family="'Plus Jakarta Sans','Cantarell','DejaVu Sans',sans-serif">First</text>
+      <text x="150" y="282" text-anchor="middle" fill="#fff" font-size="58" font-weight="800" font-family="'Plus Jakarta Sans','Cantarell','DejaVu Sans',sans-serif">Element</text>
+    </svg>
+    <div class="site" id="sSite">Chalets 3</div>
+    <div class="sclock" id="sClock">--:--</div>
+    <div class="sdate" id="sDate"></div>
+    <div class="skpi">
+      <div><b id="sAuto" style="color:var(--gold)">—</b><span>Autonomie du jour</span></div>
+      <div><b id="sPv" style="color:var(--pv)">—</b><span>Solaire</span></div>
+      <div><b id="sH2" style="color:var(--h2)">—</b><span>Réserve H₂</span></div>
+    </div>
+  </div>
+  <div class="hint">Touchez l'écran</div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+'use strict';
+const NS = 'http://www.w3.org/2000/svg';
+const SAVER_MS = 2 * 60 * 1000;              // veille après 2 min sans toucher
+const TECH_OLD_MIN = 15;
+const H2_STANDBY_KW = 1.0;                   // kW : au-dessus, l'électrolyseur produit réellement (veille ≈ 0,35 kW, préparation ≈ 0,6 kW)                      // mesure technique considérée ancienne au-delà (min)
+let DATA = null, TECH = null, PAGE = 'home', PERIOD = 'jour', SK = 'kw';
+const $ = id => document.getElementById(id);
+const ok = v => v !== null && v !== undefined && !isNaN(v);
+function el(tag, attrs, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function kwH(v) { if (!ok(v)) return '—'; const a = Math.abs(v); return (a < 10 ? a.toFixed(2) : a.toFixed(1)) + '<small>kW</small>'; }
+function kwhT(v) {
+  if (!ok(v)) return '—';
+  if (v >= 1000) return (v / 1000).toFixed(2) + ' MWh';
+  if (v >= 100) return Math.round(v) + ' kWh';
+  return v.toFixed(1) + ' kWh';
+}
+function kwhH(v) { const t = kwhT(v); return t === '—' ? t : t.replace(/ (k|M)Wh$/, '<small>$1Wh</small>'); }
+function pct(v) { return ok(v) ? Math.round(v) + ' %' : '—'; }
+function h2pct(soc) { const s = soc * 100; return s < 10 ? s.toFixed(1) : String(Math.round(s)); }
+
+const ELY = {20: ['En production', 'on'], 10: ['En attente', 'idle'], 0: ['Démarrage', 'idle'], 30: ['Maintenance', 'idle']};
+const FC = {4: ['En marche', 'on'], 2: ['En veille', 'idle'], 0: ["À l'arrêt", 'idle'], 8: ["À l'arrêt", 'idle'], 1: ['Défaut', 'warn']};
+function elyState(v) { return !ok(v) ? ['—', 'idle'] : (v < 0 ? ['Défaut', 'warn'] : (ELY[v] || ['Code ' + v, 'idle'])); }
+function fcState(v) { return !ok(v) ? ['—', 'idle'] : (FC[v] || ['Code ' + v, 'idle']); }
+
+/* ---------------- navigation ---------------- */
+function show(p) {
+  PAGE = p;
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b.dataset.p === p));
+  document.querySelectorAll('.page').forEach(s => s.classList.toggle('active', s.id === 'p-' + p));
+  hideTip();
+  render();
+}
+document.querySelectorAll('#nav button').forEach(b => b.addEventListener('click', () => show(b.dataset.p)));
+function segHandler(sel, cb) {
+  document.querySelectorAll(sel + ' button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll(sel + ' button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); cb(b);
+  }));
+}
+segHandler('#skSeg', b => { SK = b.dataset.m; renderSankey(); });
+segHandler('#pSeg', b => { PERIOD = b.dataset.p; renderCharts(); });
+
+/* ---------------- horloge & veille ---------------- */
+function tickClock() {
+  const d = new Date();
+  const hm = d.toLocaleTimeString('fr-CH', {hour: '2-digit', minute: '2-digit'});
+  $('clock').textContent = hm; $('sClock').textContent = hm;
+  const ds = d.toLocaleDateString('fr-CH', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'});
+  $('sDate').textContent = ds.charAt(0).toUpperCase() + ds.slice(1);
+}
+let lastTouch = Date.now(), saverOn = false;
+function wake(ev) {
+  lastTouch = Date.now();
+  if (saverOn) {
+    saverOn = false; $('saver').classList.remove('on');
+    show('home');
+    if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+  }
+}
+['pointerdown', 'touchstart', 'mousedown', 'keydown'].forEach(t =>
+  document.addEventListener(t, wake, {capture: true, passive: false}));
+document.addEventListener('mousemove', () => document.body.classList.add('mouse'), {once: true});
+function saverTick() {
+  if (!saverOn && Date.now() - lastTouch > SAVER_MS) { saverOn = true; $('saver').classList.add('on'); renderSaver(); }
+  if (saverOn) {   // léger déplacement pour ménager l'écran
+    const dx = Math.round((Math.random() - .5) * 100), dy = Math.round((Math.random() - .5) * 24);
+    $('saverInner').style.transform = `translate(${dx}px,${dy}px)`;
+  }
+}
+function renderSaver() {
+  if (!DATA) return;
+  const L = DATA.live || {}, S = DATA.periods.jour.summary;
+  $('sSite').textContent = DATA.site || '';
+  $('sAuto').textContent = pct(S.autonomie);
+  $('sPv').textContent = ok(L.pv) ? L.pv.toFixed(1) + ' kW' : '—';
+  $('sH2').textContent = ok(L.h2_soc) ? h2pct(L.h2_soc) + ' %' : '—';
+}
+
+/* ---------------- accueil ---------------- */
+function renderHome() {
+  const L = DATA.live || {}, S = DATA.periods.jour.summary;
+  $('hAuto').innerHTML = ok(S.autonomie) ? Math.round(S.autonomie) + '<small>%</small>' : '—';
+  $('hPv').innerHTML = kwH(L.pv);
+  $('hPvS').textContent = "Aujourd'hui : " + kwhT(S.pv);
+  if (ok(L.bat_soc)) {
+    const s = L.bat_soc * 100;
+    $('hBat').innerHTML = Math.round(s) + '<small>%</small>';
+    $('hBatB').style.width = Math.max(0, Math.min(100, s)) + '%';
+    $('hBatS').textContent = !ok(L.bat) ? '' : (L.bat > 0 ? 'En charge · ' + L.bat.toFixed(1) + ' kW' : L.bat < 0 ? 'En décharge · ' + (-L.bat).toFixed(1) + ' kW' : 'Au repos');
+  }
+  if (ok(L.h2_soc)) {
+    $('hH2').innerHTML = h2pct(L.h2_soc) + '<small>%</small>';
+    $('hH2B').style.width = Math.max(0, Math.min(100, L.h2_soc * 100)) + '%';
+    $('hH2S').textContent = ok(L.pressure) ? Math.round(L.pressure) + ' bar dans les racks' : '';
+  }
+  if (ok(L.grid)) {
+    const inj = L.grid < -0.05;
+    $('hGrid').innerHTML = kwH(L.grid);
+    $('hGridK').style.setProperty('--c', inj ? 'var(--inj)' : 'var(--grid)');
+    $('hGridS').textContent = Math.abs(L.grid) < 0.05 ? 'Équilibre' : (inj ? 'Injection' : 'Soutirage');
+  }
+  renderSankey();
+}
+
+function liveFlows(L) {
+  const z = v => ok(v) ? v : 0;
+  const pv = Math.max(z(L.pv), 0), load = Math.max(z(L.load), 0), h2 = Math.max(z(L.h2), 0);
+  const bat = z(L.bat), fc = Math.max(z(L.fc), 0);
+  const batch = Math.max(bat, 0), batdis = Math.max(-bat, 0), cons = load + h2;
+  const fc_bat = Math.min(fc, batch);
+  const pv_bat = Math.min(pv, Math.max(batch - fc_bat, 0));
+  const pv_cons = Math.min(pv - pv_bat, cons); let rem = cons - pv_cons;
+  const pv_exp = Math.max(pv - pv_bat - pv_cons, 0);
+  const bat_cons = Math.min(batdis, rem); rem -= bat_cons;
+  const fc_cons = Math.min(fc - fc_bat, rem); rem -= fc_cons;
+  return {pv, load, h2, cons, fc, batch, batdis, fc_bat, pv_bat, pv_cons, pv_exp, bat_cons, fc_cons, grid_cons: Math.max(rem, 0), ok: ok(L.pv)};
+}
+function periodFlows(S) {
+  const f = S.flows || {}, z = v => v || 0;
+  return {pv: z(S.pv), load: z(f.load), h2: z(f.h2), cons: z(S.cons), fc: z(S.fc), batch: z(S.batch), batdis: z(S.batdis),
+          fc_bat: z(f.fc_bat), pv_bat: z(f.pv_bat), pv_cons: z(f.pv_cons), pv_exp: z(f.pv_exp), bat_cons: z(f.bat_cons),
+          fc_cons: z(f.fc_cons), grid_cons: z(f.grid_cons), ok: (S.minutes || 0) > 0};
+}
+
+function renderSankey() {
+  if (!DATA) return;
+  const L = DATA.live || {};
+  const svg = $('sankey'); svg.innerHTML = '';
+  const KWH = SK !== 'kw';
+  const P = KWH ? DATA.periods[SK] : null;
+  const F = KWH ? periodFlows(P.summary) : liveFlows(L);
+  const tm = L.time ? new Date(L.time) : null;
+  $('skSub').textContent = KWH ? P.title + ' · énergie cumulée' : (tm ? 'Puissance instantanée · mesure de ' + tm.toLocaleTimeString('fr-CH', {hour: '2-digit', minute: '2-digit'}) : 'Puissance instantanée');
+
+  const fmtK = v => {
+    const u = KWH ? ' kWh' : ' kW';
+    if (!v || v < 0.05) return '0' + u;
+    if (KWH && v >= 1000) return (v / 1000).toFixed(1) + ' MWh';
+    if (v >= 100) return Math.round(v) + u;
+    return v.toFixed(1) + u;
+  };
+  const maxV = Math.max(F.pv, F.cons, F.grid_cons, F.batch, F.batdis, F.fc, 1e-6);
+  const sh = v => v >= 0.05;
+  const sw = v => Math.max(3, Math.min(44, (v / maxV) * 48));
+  const LABELS = [];   // étiquettes dessinées en dernier, par-dessus tous les flux
+  const label = (x, y, txt, col, anchor) => LABELS.push([x, y, txt, col, anchor]);
+  const drawLabels = () => LABELS.forEach(([x, y, txt, col, anchor]) => {
+    const w = txt.length * 8 + 16, ax = anchor === 'start' ? 0 : (anchor === 'end' ? -w : -w / 2);
+    svg.appendChild(el('rect', {x: x + ax, y: y - 13, width: w, height: 22, fill: '#0b1230', rx: 3}));
+    svg.appendChild(el('text', {x: x + (anchor === 'start' ? 8 : anchor === 'end' ? -8 : 0), y: y + 3, 'text-anchor': anchor || 'middle', 'font-size': 15, 'font-weight': 800, fill: col}, txt));
+  });
+  const title = (x, y, txt) => svg.appendChild(el('text', {x, y, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700, 'letter-spacing': '0.2em', fill: 'rgba(255,255,255,0.38)'}, txt));
+  const node = (x, y, r, col, lab, sub, dim) => {
+    svg.appendChild(el('circle', {cx: x, cy: y, r: r + 8, fill: col, opacity: dim ? .03 : .1}));
+    svg.appendChild(el('circle', {cx: x, cy: y, r, fill: '#0b1230', stroke: col, 'stroke-width': 2.5, opacity: dim ? .45 : 1}));
+    svg.appendChild(el('text', {x, y: y + r + 22, 'text-anchor': 'middle', 'font-size': 14, 'font-weight': 700, 'letter-spacing': '0.08em', fill: dim ? 'rgba(255,255,255,.4)' : 'rgba(255,255,255,.85)'}, lab));
+    if (sub) svg.appendChild(el('text', {x, y: y + r + 42, 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 800, fill: col, opacity: dim ? .6 : 1}, sub));
+  };
+
+  if (!F.ok) {
+    svg.appendChild(el('text', {x: 550, y: 235, 'text-anchor': 'middle', 'font-size': 20, fill: 'rgba(255,255,255,.4)'}, KWH ? 'Pas encore de données sur cette période' : 'Mesures en direct indisponibles'));
+    return;
+  }
+  const C_PV = '#f6c66b', C_BAT = '#5ea8ff', C_H2 = '#4fd1e8', C_GRID = '#a78bf4', C_INJ = '#ee7a5c', C_BLD = '#e9ecf8';
+  const X_PV = 100, X_SPLIT = 240, X_MID = 510, X_MERGE = 800, X_CONS = 980;
+  const Y_DIR = 165, Y_PV = 245, Y_BAT = 245, Y_H2 = 378, Y_MERGE = 245, Y_BLD = 175, Y_ELY = 330, Y_TOP = 96;
+  const X_FC = X_MID - 110, X_ST = X_MID + 110;
+
+  title(X_PV, 40, 'PRODUCTION'); title(X_MID, 40, 'STOCKAGE / CONVERSION'); title(X_CONS, 40, 'CONSOMMATION');
+  // Règle d'affichage : chaque lien est toujours dessiné ; plein et lumineux s'il y a un flux,
+  // en traitillé fin et atténué s'il est nul.
+  const bz = (x1, y1, x2, y2) => { const dx = (x2 - x1) * 0.45; return `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`; };
+  const flow = (d, v, col, on, fixedW) => {
+    const active = on === undefined ? sh(v) : on;
+    const a = {d, fill: 'none', stroke: col, 'stroke-linecap': 'round'};
+    if (active) Object.assign(a, {'stroke-width': fixedW || sw(v), opacity: '0.85'});
+    else Object.assign(a, {'stroke-width': 2.5, 'stroke-dasharray': '6 5', opacity: '0.35'});
+    svg.appendChild(el('path', a));
+  };
+  // Production d'hydrogène réelle (et pas seulement la veille de l'électrolyseur) :
+  // en direct = état « En production » ; sur une période = puissance moyenne au-dessus de la veille.
+  const hrs = KWH ? Math.max((P.summary.minutes || 0) / 60, 1e-6) : 1;
+  const h2Prod = (F.h2 / hrs) > H2_STANDBY_KW;
+  const fcOn = sh(F.fc), h2On = sh(F.h2);
+
+  { const GX = X_MERGE - 160;
+    flow(`M${GX},${Y_TOP} C${GX + 100},${Y_TOP} ${X_MERGE - 30},${Y_MERGE - 100} ${X_MERGE},${Y_MERGE}`, F.grid_cons, C_GRID);
+    label(GX + 4, Y_TOP - Math.max(20, (sh(F.grid_cons) ? sw(F.grid_cons) : 0) / 2 + 16), 'Réseau · ' + fmtK(F.grid_cons), C_GRID, 'start'); }
+  flow(bz(X_PV + 36, Y_PV, X_SPLIT, Y_PV), F.pv, C_PV);
+  { const IX = X_SPLIT + 160;
+    flow(`M${X_SPLIT},${Y_PV} C${X_SPLIT + 30},${Y_PV - 100} ${IX - 100},${Y_TOP} ${IX},${Y_TOP}`, F.pv_exp, C_INJ);
+    label(IX - 4, Y_TOP - Math.max(20, (sh(F.pv_exp) ? sw(F.pv_exp) : 0) / 2 + 16), 'Injection · ' + fmtK(F.pv_exp), C_INJ, 'end'); }
+  { const dx1 = (X_MID - X_SPLIT) * 0.45, dx2 = (X_MERGE - X_MID) * 0.45;
+    flow(`M${X_SPLIT},${Y_PV} C${X_SPLIT + dx1},${Y_PV} ${X_MID - dx1},${Y_DIR} ${X_MID},${Y_DIR} C${X_MID + dx2},${Y_DIR} ${X_MERGE - dx2},${Y_MERGE} ${X_MERGE},${Y_MERGE}`, F.pv_cons, C_PV);
+    label(X_MID, Y_DIR - 24, 'Solaire direct · ' + fmtK(F.pv_cons), C_PV); }
+  const batOn = sh(F.batch) || sh(F.bat_cons);
+  flow(bz(X_SPLIT, Y_PV, X_MID - 26, Y_BAT), F.pv_bat, C_BAT);
+  flow(bz(X_MID + 26, Y_BAT, X_MERGE, Y_MERGE), F.bat_cons, C_BAT);
+  node(X_MID, Y_BAT, 26, C_BAT, 'BATTERIE', ok(L.bat_soc) ? Math.round(L.bat_soc * 100) + ' %' : null, !batOn);
+  label(X_MID - 34, Y_BAT - 44, 'Charge ' + fmtK(F.batch), C_BAT, 'end');
+  label(X_MID + 34, Y_BAT - 44, 'Décharge ' + fmtK(F.batdis), C_BAT, 'start');
+
+  // chaîne hydrogène : production H₂ -> stockage -> pile -> batterie (bus DC) / consommation
+  flow(`M${X_CONS - 30},${Y_ELY} C${X_CONS - 115},${Y_ELY} ${X_ST + 140},${Y_H2} ${X_ST + 26},${Y_H2}`, 0, C_H2, h2Prod, 5);
+  flow(bz(X_ST - 26, Y_H2, X_FC + 26, Y_H2), F.fc, C_H2, fcOn, 5);
+  flow(`M${X_FC},${Y_H2 - 26} C${X_FC},${Y_BAT + 22} ${X_FC + 30},${Y_BAT + 12} ${X_MID - 22},${Y_BAT + 12}`, F.fc_bat, C_H2);
+  flow(bz(X_FC + 26, Y_H2 - 6, X_MERGE, Y_MERGE), F.fc_cons, C_H2);
+  const stSub = ok(L.h2_soc) ? h2pct(L.h2_soc) + ' %' + (ok(L.pressure) ? ' · ' + Math.round(L.pressure) + ' bar' : '') : null;
+  node(X_ST, Y_H2, 26, C_H2, 'STOCKAGE H₂', stSub, !h2Prod && !fcOn);
+  node(X_FC, Y_H2, 26, C_H2, 'PILE H₂', fmtK(F.fc), !fcOn);
+  svg.appendChild(el('text', {x: X_ST + 150, y: Y_H2 + 44, 'text-anchor': 'middle', 'font-size': 12, 'font-style': 'italic',
+    fill: h2Prod ? 'rgba(79,209,232,.8)' : 'rgba(255,255,255,.35)'}, h2Prod ? 'H₂ produit et stocké' : 'Pas de production H₂'));
+
+  flow(bz(X_MERGE, Y_MERGE, X_CONS, Y_BLD), F.load, C_BLD);
+  flow(bz(X_MERGE, Y_MERGE, X_CONS, Y_ELY), F.h2, C_H2);
+  svg.appendChild(el('circle', {cx: X_MERGE, cy: Y_MERGE, r: 11, fill: '#172247', stroke: 'rgba(255,255,255,.3)', 'stroke-width': 1.5}));
+  node(X_PV, Y_PV, 36, C_PV, 'SOLAIRE', fmtK(F.pv), !sh(F.pv));
+  node(X_CONS, Y_BLD, 30, C_BLD, 'BÂTIMENT', fmtK(F.load), !sh(F.load));
+  node(X_CONS, Y_ELY, 30, C_H2, 'PRODUCTION H₂', fmtK(F.h2), !h2On);
+  drawLabels();
+  svg.appendChild(el('text', {x: 1090, y: 448, 'text-anchor': 'end', 'font-size': 12, 'letter-spacing': '0.14em', 'font-weight': 700, fill: 'rgba(255,255,255,.4)'}, 'CONSOMMATION TOTALE'));
+  svg.appendChild(el('text', {x: 1090, y: 468, 'text-anchor': 'end', 'font-size': 18, 'font-weight': 800, fill: 'rgba(255,255,255,.85)'}, fmtK(F.cons)));
+}
+
+/* ---------------- graphiques ---------------- */
+function renderCharts() {
+  if (!DATA) return;
+  const P = DATA.periods[PERIOD];
+  $('pTitle').textContent = P.title;
+  const S = P.summary;
+  $('rPv').textContent = kwhT(S.pv); $('rLoad').textContent = kwhT(S.load); $('rH2').textContent = kwhT(S.h2);
+  $('rImp').textContent = kwhT(S.imp); $('rExp').textContent = kwhT(S.exp);
+  $('kAuto').textContent = pct(S.autonomie); $('kSelf').textContent = pct(S.autoconso);
+  renderBars(P);
+}
+function renderBars(P) {
+  const svg = $('bars'); svg.innerHTML = '';
+  const W = svg.clientWidth || 800, H = svg.clientHeight || 420;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const B = P.buckets, n = B.length;
+  const padL = 50, padR = 8, padT = 10, padB = 28;
+  const tot = b => b.pv_cons + b.bat_cons + b.fc_cons + b.grid_cons;
+  let maxPos = Math.max(1e-6, ...B.map(tot)); const maxNeg = Math.max(0, ...B.map(b => b.exp));
+  const nice = v => { const p = Math.pow(10, Math.floor(Math.log10(v))); const m = v / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; };
+  const step = nice(maxPos / 4); maxPos = Math.ceil(maxPos / step) * step;
+  const negShare = maxNeg > 0 ? Math.min(0.25, Math.max(0.1, maxNeg / (maxPos + maxNeg))) : 0;
+  const chartH = H - padT - padB, zeroY = padT + chartH * (1 - negShare);
+  const sc = (zeroY - padT) / maxPos, negSc = maxNeg > 0 ? (chartH * negShare) / Math.max(maxNeg, step) : 0;
+  const cw = (W - padL - padR) / n, bw = Math.max(3, cw * (n > 24 ? 0.68 : 0.6));
+  for (let v = 0; v <= maxPos + 1e-9; v += step) {
+    const y = zeroY - v * sc;
+    svg.appendChild(el('line', {x1: padL, x2: W - padR, y1: y, y2: y, stroke: v === 0 ? 'rgba(255,255,255,.25)' : 'rgba(255,255,255,.07)'}));
+    svg.appendChild(el('text', {x: padL - 8, y: y + 4, 'text-anchor': 'end', 'font-size': 12, fill: 'rgba(255,255,255,.45)'}, v >= 1000 ? (v / 1000) + ' M' : (v < 1 && v > 0 ? v.toFixed(1) : Math.round(v))));
+  }
+  const cols = [['pv_cons', '#f6c66b'], ['bat_cons', '#5ea8ff'], ['fc_cons', '#4fd1e8'], ['grid_cons', 'rgba(167,139,244,.6)']];
+  const every = n > 24 ? 2 : (n > 12 ? 2 : 1);
+  B.forEach((b, i) => {
+    const x = padL + i * cw + (cw - bw) / 2; let y = zeroY;
+    cols.forEach(([k, c]) => { const h = b[k] * sc; if (h > 0.2) { svg.appendChild(el('rect', {x, y: y - h, width: bw, height: h, fill: c, rx: 1.5})); y -= h + (h > 2 ? 1 : 0); } });
+    if (b.exp > 0.005) svg.appendChild(el('rect', {x, y: zeroY + 1, width: bw, height: Math.max(1, b.exp * negSc), fill: 'rgba(238,122,92,.8)', rx: 1.5}));
+    if (i % every === 0) svg.appendChild(el('text', {x: padL + i * cw + cw / 2, y: H - 8, 'text-anchor': 'middle', 'font-size': 12, fill: 'rgba(255,255,255,.5)'}, b.label));
+    const hit = el('rect', {x: padL + i * cw, y: padT, width: cw, height: chartH, fill: 'transparent'});
+    hit.addEventListener('pointerdown', ev => { ev.stopPropagation(); showTip(ev, b); });
+    svg.appendChild(hit);
+  });
+  if (!B.some(b => b.has)) svg.appendChild(el('text', {x: W / 2, y: H / 2, 'text-anchor': 'middle', 'font-size': 16, fill: 'rgba(255,255,255,.4)'}, 'Pas encore de données sur cette période'));
+  $('stepLbl').textContent = {heure: 'pas horaire', jour: 'pas journalier', mois: 'pas mensuel'}[P.step] + ' · touchez une barre pour le détail';
+}
+function showTip(ev, b) {
+  const t = $('tip');
+  t.innerHTML = `<div class="tt">${b.title}</div>` + (b.has ? [
+    ['Consommation totale', kwhT(b.load + b.h2)], ['· bâtiment', kwhT(b.load)], ['· hydrogène', kwhT(b.h2)],
+    ['Solaire utilisé', kwhT(b.pv_cons)], ['Batterie', kwhT(b.bat_cons)], ['Pile H₂', kwhT(b.fc_cons)],
+    ['Réseau', kwhT(b.grid_cons)], ['Injection', kwhT(b.exp)], ['Production solaire', kwhT(b.pv)]
+  ].map(([a, v]) => `<div class="r"><span>${a}</span><b>${v}</b></div>`).join('') : '<div class="r"><span>Aucune donnée</span></div>');
+  t.style.display = 'block';
+  t.style.left = Math.max(8, Math.min(ev.clientX + 16, innerWidth - t.offsetWidth - 8)) + 'px';
+  t.style.top = Math.max(8, Math.min(ev.clientY - t.offsetHeight / 2, innerHeight - t.offsetHeight - 8)) + 'px';
+}
+function hideTip() { $('tip').style.display = 'none'; }
+document.addEventListener('pointerdown', hideTip);
+
+/* ---------------- hydrogène ---------------- */
+function renderH2() {
+  const L = DATA.live || {}, Pd = DATA.periods;
+  const e = elyState(L.ely_state), f = fcState(L.fc_state);
+  $('yEly').textContent = e[0]; $('yEly').className = 'st ' + e[1];
+  $('yElyD').textContent = ok(L.h2) ? 'Puissance : ' + L.h2.toFixed(2) + ' kW' : '';
+  $('yCmp').textContent = L.ely_state === 20 ? 'En service' : 'En veille';
+  $('yCmpD').textContent = 'suit l\'électrolyse · conso. incluse dans la puissance H₂';
+  $('ySt').textContent = ok(L.h2_soc) ? h2pct(L.h2_soc) + ' %' : '—';
+  $('yStD').textContent = ok(L.pressure) ? Math.round(L.pressure) + ' bar' : '';
+  let ft = f[0]; if (L.fc_state === 4 && ok(L.fc)) ft += ' · ' + L.fc.toFixed(1) + ' kW';
+  $('yFc').textContent = ft; $('yFc').className = 'st ' + f[1];
+  $('yFcD').textContent = 'Restitue l\'énergie stockée';
+  if (ok(L.h2_soc)) {
+    $('yTank').style.height = Math.max(1.5, Math.min(100, L.h2_soc * 100)) + '%';
+    $('yTankV').textContent = h2pct(L.h2_soc) + ' %';
+  }
+  $('yPress').innerHTML = ok(L.pressure) ? L.pressure.toFixed(1) + '<small>bar</small>' : '—';
+  $('yTime').textContent = L.time ? 'mesure de ' + new Date(L.time).toLocaleTimeString('fr-CH', {hour: '2-digit', minute: '2-digit'}) : '';
+  $('yJ').innerHTML = kwhH(Pd.jour.summary.h2); $('yM').innerHTML = kwhH(Pd.mois.summary.h2); $('yA').innerHTML = kwhH(Pd.annee.summary.h2);
+  $('yFJ').innerHTML = kwhH(Pd.jour.summary.fc); $('yFM').innerHTML = kwhH(Pd.mois.summary.fc); $('yFA').innerHTML = kwhH(Pd.annee.summary.fc);
+}
+
+/* ---------------- technique ---------------- */
+let TGROUP = null;
+const GROUPS = [   // regroupement des mesures brutes par organe (préfixes des noms de mesure)
+  ['Électrolyseur', /^(ely|electrolyz|H2prod|H2O_|Dewpoint|CurrentYield|EnergyRequest|MachineControlState|Pack_|Ely)/i],
+  ['Compresseur', /^(cmp|compress|PT_?0|FT_?0|HT_?0|InterstagePressure|Cooling|GasTemperature|CurrentActualP|CurrentSetpointP|ActCurrent|ActVoltage|VoltagePackage|Shunt|Temp)/i],
+  ['Pile H₂', /^(fc|fcl|FC_|Anode|Cathode|COSensor|HBypass|HInlet|HOutlet)/i],
+  ['Stockage', /^(ctl|tank|H2Tank|pa1|rfl|refuel)/i],
+  ['Onduleur', /^(inv|ivt|Inverter)/i],
+];
+function srcGroup(s) {   // source de collecte : compresseur Hyet, cartes Quokka (C01-…), etc.
+  if (!s) return null;
+  if (/hyet/i.test(s)) return 'Compresseur (Hyet)';
+  if (/^C\d\d-/.test(s)) return 'Carte ' + s;
+  return s;
+}
+function groupOf(name) {
+  const parts = name.split(' · ');
+  for (const [g, re] of GROUPS) if (parts.some(p => re.test(p))) return g;
+  return 'Autres';
+}
+function fmtVal(v) {
+  if (typeof v === 'number') { const a = Math.abs(v); return a >= 1000 ? v.toFixed(0) : a >= 100 ? v.toFixed(1) : a >= 1 ? v.toFixed(2) : v.toFixed(3); }
+  return String(v);
+}
+function renderTech() {
+  const L = DATA.live || {};
+  const e = elyState(L.ely_state), f = fcState(L.fc_state);
+  $('tEly').textContent = e[0]; $('tElyC').textContent = ok(L.ely_state) ? 'code ' + L.ely_state : '';
+  $('tH2').innerHTML = kwH(L.h2);
+  $('tFc').textContent = f[0]; $('tFcC').textContent = ok(L.fc_state) ? 'code ' + L.fc_state : '';
+  $('tFcP').innerHTML = kwH(ok(L.fc) ? L.fc : (ok(L.fc_state) && L.fc_state !== 4 ? 0 : null));
+  $('tPr').innerHTML = ok(L.pressure) ? L.pressure.toFixed(1) + '<small>bar</small>' : '—';
+  $('tSoc').textContent = ok(L.h2_soc) ? 'niveau ' + h2pct(L.h2_soc) + ' %' : '';
+  const t = L.time ? new Date(L.time) : null, age = t ? (Date.now() - t) / 60000 : null;
+  $('tAge').textContent = t ? t.toLocaleTimeString('fr-CH', {hour: '2-digit', minute: '2-digit'}) : '—';
+  $('tAgeS').textContent = age === null ? '' : (age < 2 ? 'à jour' : 'il y a ' + Math.round(age) + ' min');
+  $('tAgeK').style.setProperty('--c', age !== null && age < 10 ? 'var(--ok)' : 'var(--warn)');
+
+  const list = $('tList'), gbox = $('tGroups');
+  if (!TECH || !TECH.values) {
+    gbox.innerHTML = '';
+    list.innerHTML = '<div class="empty">Les mesures détaillées (pressions, températures, tensions des cellules, codes d\'alarme…)<br>apparaîtront ici dès que le fichier <b>tech.json</b> sera produit par l\'exporteur.</div>';
+    return;
+  }
+  const groups = {};
+  for (const [k, v] of Object.entries(TECH.values)) (groups[srcGroup(v.s) || groupOf(k)] ||= []).push([k, v]);
+  const order = [...GROUPS.map(g => g[0]), 'Autres'];
+  const names = Object.keys(groups).sort((a, b) => (order.indexOf(a) + 1 || 50) - (order.indexOf(b) + 1 || 50) || a.localeCompare(b));
+  if (!TGROUP || !groups[TGROUP]) TGROUP = names[0];
+  gbox.innerHTML = '';
+  names.forEach(g => {
+    const b = document.createElement('button');
+    b.className = g === TGROUP ? 'active' : '';
+    b.innerHTML = `<span>${g}</span><em>${groups[g].length}</em>`;
+    b.addEventListener('click', () => { TGROUP = g; renderTech(); });
+    gbox.appendChild(b);
+  });
+  const gen = TECH.generated ? new Date(TECH.generated) : null;
+  $('tGTitle').textContent = TGROUP + ' · mesures brutes';
+  $('tGInfo').textContent = gen ? 'relevé ' + gen.toLocaleTimeString('fr-CH', {hour: '2-digit', minute: '2-digit'}) : '';
+  const items = groups[TGROUP].sort((a, b) => a[0].localeCompare(b[0], 'fr', {numeric: true}));
+  list.innerHTML = items.map(([k, v]) => {
+    const tt = v.t ? new Date(v.t) : null, old = tt && gen && (gen - tt) / 60000 > TECH_OLD_MIN;
+    const unit = v.u ? ' ' + v.u : '';
+    return `<div class="t-item${old ? ' old' : ''}"><div class="k" title="${k}">${k}</div><div class="x">${fmtVal(v.v)}${unit}</div>` +
+           `<div class="a">${tt ? tt.toLocaleTimeString('fr-CH', {hour: '2-digit', minute: '2-digit'}) : ''}</div></div>`;
+  }).join('');
+}
+
+/* ---------------- données ---------------- */
+function render() {
+  if (!DATA) return;
+  if (PAGE === 'home') renderHome();
+  else if (PAGE === 'charts') renderCharts();
+  else if (PAGE === 'h2') renderH2();
+  else if (PAGE === 'tech') renderTech();
+  if (saverOn) renderSaver();
+}
+async function getJson(name) {
+  const r = await fetch(name + '?t=' + Date.now(), {cache: 'no-store'});
+  if (!r.ok) throw new Error(name + ' ' + r.status);
+  return r.json();
+}
+async function load() {
+  try {
+    DATA = await getJson('data.json');
+    if (DATA.site) $('siteName').textContent = DATA.site;
+  } catch (e) { /* on garde les dernières données */ }
+  try { TECH = await getJson('tech.json'); } catch (e) { TECH = TECH || null; }
+  const t = DATA && DATA.live && DATA.live.time ? new Date(DATA.live.time) : null;
+  const age = t ? (Date.now() - t) / 60000 : 999;
+  $('badge').classList.toggle('stale', age > 10);
+  $('badgeTxt').textContent = !t ? 'Données indisponibles' : (age > 10 ? 'Mesure de ' + t.toLocaleTimeString('fr-CH', {hour: '2-digit', minute: '2-digit'}) : 'En direct');
+  render();
+}
+let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 150); });
+document.addEventListener('contextmenu', e => e.preventDefault());
+tickClock(); setInterval(tickClock, 5000);
+setInterval(saverTick, 15000);
+load(); setInterval(load, 30000);
+</script>
+</body>
+</html>
